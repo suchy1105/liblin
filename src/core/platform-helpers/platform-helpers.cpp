@@ -171,4 +171,8 @@ string GenericPlatformHelpers::getDownloadPath () {
 	return "";
 }
 
+bool GenericPlatformHelpers::canCoreStart() {
+	return true;
+}
+
 LINPHONE_END_NAMESPACE

@@ -939,6 +939,13 @@ LinphoneStatus linphone_config_sync(LpConfig *lpconfig){
 	return 0;
 }
 
+void linphone_config_reload(LinphoneConfig *lpconfig) {
+	bctbx_list_for_each(lpconfig->sections, (void (*)(void*)) lp_section_destroy);
+	bctbx_list_free(lpconfig->sections);
+	lpconfig->sections = NULL;
+	linphone_config_read_file(lpconfig, lpconfig->filename);
+}
+
 int linphone_config_has_section(const LpConfig *lpconfig, const char *section){
 	if (linphone_config_find_section(lpconfig,section)!=NULL) return 1;
 	return 0;

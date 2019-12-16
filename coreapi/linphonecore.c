@@ -2583,6 +2583,10 @@ LinphoneStatus linphone_core_start (LinphoneCore *lc) {
 			bctbx_uninit_logger();
 		}
 
+		if (!getPlatformHelpers(lc)->canCoreStart()) {
+			return -1;
+		}
+
 		linphone_core_set_state(lc, LinphoneGlobalStartup, "Starting up");
 
 		L_GET_PRIVATE_FROM_C_OBJECT(lc)->init();
@@ -2627,6 +2631,15 @@ LinphoneStatus linphone_core_start (LinphoneCore *lc) {
 LinphoneCore *_linphone_core_new_with_config(LinphoneCoreCbs *cbs, struct _LpConfig *config, void *userdata, void *system_context, bool_t automatically_start) {
 	LinphoneCore *core = L_INIT(Core);
 	Core::create(core);
+	linphone_core_init(core, cbs, config, userdata, system_context, automatically_start);
+	return core;
+}
+
+LinphoneCore *_linphone_core_new_shared_with_config(LinphoneCoreCbs *cbs, struct _LpConfig *config, void *userdata, void *system_context, bool_t automatically_start, const char *app_group, bool_t main_core) {
+	LinphoneCore *core = L_INIT(Core);
+	Core::create(core);
+	linphone_config_set_string(config, "shared_core", "app_group", app_group);
+	core->is_main_core = main_core;
 	linphone_core_init(core, cbs, config, userdata, system_context, automatically_start);
 	return core;
 }

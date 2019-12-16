@@ -214,6 +214,11 @@ LINPHONE_PUBLIC void linphone_config_set_float(LinphoneConfig *lpconfig,const ch
 LINPHONE_PUBLIC LinphoneStatus linphone_config_sync(LinphoneConfig *lpconfig);
 
 /**
+ * Reload the config from the file.
+**/
+void linphone_config_reload(LinphoneConfig *lpconfig);
+
+/**
  * Returns 1 if a given section is present in the configuration.
 **/
 LINPHONE_PUBLIC int linphone_config_has_section(const LinphoneConfig *lpconfig, const char *section);

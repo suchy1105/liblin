@@ -78,6 +78,8 @@ public:
 	virtual void onLinphoneCoreStart (bool monitoringEnabled) = 0;
 	virtual void onLinphoneCoreStop () = 0;
 
+	virtual bool canCoreStart() = 0;
+
 protected:
 	inline explicit PlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core) : CoreAccessor(core) {}
 
@@ -125,6 +127,8 @@ public:
 
 	void onLinphoneCoreStart (bool monitoringEnabled) override;
 	void onLinphoneCoreStop () override;
+
+	bool canCoreStart() override;
 
 protected:
 	std::string mCurrentSSID;
