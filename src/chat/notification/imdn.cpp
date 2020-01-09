@@ -278,14 +278,16 @@ LinphoneProxyConfig * Imdn::getRelatedProxyConfig(){
 
 void Imdn::send () {
 	try {
-		LinphoneProxyConfig *cfg = getRelatedProxyConfig();
-		if (cfg && linphone_proxy_config_get_state(cfg) != LinphoneRegistrationOk){
-			lInfo() << "Proxy config not registered, will wait to send pending IMDNs";
-			return;
+		if (!chatRoom->getCore()->getCCore()->send_imdn_if_unregistered) {
+			LinphoneProxyConfig *cfg = getRelatedProxyConfig();
+			if (cfg && linphone_proxy_config_get_state(cfg) != LinphoneRegistrationOk){
+				lInfo() << "Proxy config not registered, will wait to send pending IMDNs";
+				return;
+			}
+
+			if (!linphone_core_is_network_reachable(chatRoom->getCore()->getCCore()))
+				return;
 		}
-		
-		if (!linphone_core_is_network_reachable(chatRoom->getCore()->getCCore()))
-			return;
 	} catch (const bad_weak_ptr &) {
 		return; // Cannot send imdn if core is destroyed.
 	}
