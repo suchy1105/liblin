@@ -47,6 +47,12 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
+typedef enum {
+	noCoreStarted,
+	mainCoreStarted,
+	executorCoreStarted
+} SharedCoreState;
+
 void on_core_must_stop(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo);
 
 class IosPlatformHelpers : public GenericPlatformHelpers {
@@ -108,7 +114,7 @@ private:
 	void setupSharedCore(struct _LpConfig *config);
 	bool isCoreShared();
 	bool isSharedCoreStarted();
-	void setSharedCoreState(bool active);
+	void setSharedCoreState(SharedCoreState sharedCoreState);
 	void reloadConfig();
 
 
@@ -279,7 +285,7 @@ void IosPlatformHelpers::onLinphoneCoreStop() {
 		stopNetworkMonitoring();
 	}
 	if (isCoreShared()) {
-		setSharedCoreState(false);
+		setSharedCoreState(SharedCoreState::noCoreStarted);
 	}
 }
 
@@ -636,16 +642,21 @@ bool IosPlatformHelpers::canCoreStart() {
 
 bool IosPlatformHelpers::isSharedCoreStarted() {
     NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(mAppGroup.c_str())];
-    bool active = [defaults boolForKey:@ACTIVE_SHARED_CORE];
-	ms_message("[SHARED] isSharedCoreStarted %d", active);
-	return active;
+    NSInteger state = [defaults integerForKey:@ACTIVE_SHARED_CORE];
+	ms_message("[SHARED] isSharedCoreStarted %d", (int) state);
+	if (state == SharedCoreState::noCoreStarted) {
+		return false;
+	}
+	return true;
 }
 
-// set to false in onLinphoneCoreStop() (called in linohone_core_stop)
-void IosPlatformHelpers::setSharedCoreState(bool active) {
-	ms_message("[SHARED] setSharedCoreState %d", active);
+/**
+ * Set to false in onLinphoneCoreStop() (called in linphone_core_stop)
+ */
+void IosPlatformHelpers::setSharedCoreState(SharedCoreState sharedCoreState) {
+	ms_message("[SHARED] setSharedCoreState sharedCoreState: %d", sharedCoreState);
     NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(mAppGroup.c_str())];
-    [defaults setBool:active forKey:@ACTIVE_SHARED_CORE];
+    [defaults setInteger:sharedCoreState forKey:@ACTIVE_SHARED_CORE];
 }
 
 // we need to reload the config from file at each start tp get the changes made by the other cores
@@ -668,7 +679,7 @@ bool IosPlatformHelpers::canExecutorCoreStart() {
 	if (isSharedCoreStarted()) return false;
 
 	subscribeToMainCoreNotifs();
-	setSharedCoreState(true);
+	setSharedCoreState(SharedCoreState::executorCoreStarted);
 	reloadConfig();
 	return true;
 }
@@ -707,7 +718,7 @@ bool IosPlatformHelpers::canMainCoreStart() {
 			return false;
 		}
 	}
-	setSharedCoreState(true);
+	setSharedCoreState(SharedCoreState::mainCoreStarted);
 	reloadConfig();
 	return true;
 }
@@ -723,7 +734,7 @@ void IosPlatformHelpers::stopSharedCores() {
     }
 	if (isSharedCoreStarted()) {
 		// TODO PAUL : set a false pour pouvoir tester
-		setSharedCoreState(false);
+		setSharedCoreState(SharedCoreState::noCoreStarted);
 		// throw "Unable to stop shared Core";
 	}
     ms_message("[SHARED] stopped");
