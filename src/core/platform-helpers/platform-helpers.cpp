@@ -175,4 +175,8 @@ bool GenericPlatformHelpers::canCoreStart() {
 	return true;
 }
 
+LinphoneChatMessage *GenericPlatformHelpers::getPushNotificationMessage() {
+	return nullptr;
+}
+
 LINPHONE_END_NAMESPACE

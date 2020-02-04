@@ -26,6 +26,7 @@
 
 #include "chat/encryption/encryption-engine.h"
 #include "chat/encryption/legacy-encryption-engine.h"
+#include "linphone/api/c-types.h"
 
 // =============================================================================
 
@@ -133,4 +134,8 @@ bool_t linphone_core_is_friend_list_subscription_enabled(LinphoneCore *lc) {
 
 void linphone_core_ensure_registered(LinphoneCore *lc) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->pushNotificationReceived();
+}
+
+LinphoneChatMessage * linphone_core_get_push_notification_message(LinphoneCore *lc) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getPushNotificationMessage();
 }

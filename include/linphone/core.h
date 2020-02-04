@@ -6132,6 +6132,13 @@ LINPHONE_PUBLIC void linphone_core_load_config_from_xml(LinphoneCore *lc, const 
 **/
 LINPHONE_PUBLIC void linphone_core_ensure_registered(LinphoneCore *lc);
 
+/**
+ * Get the chat message for the push notification
+ * @param[in] lc The #LinphoneCore
+ * @return The #LinphoneChatMessage object.
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC LinphoneChatMessage * linphone_core_get_push_notification_message(LinphoneCore *lc);
 
 #ifdef __cplusplus
 }

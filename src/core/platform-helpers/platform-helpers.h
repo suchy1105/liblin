@@ -26,6 +26,7 @@
 #include "linphone/utils/general.h"
 #include "core/core-accessor.h"
 #include "core/core.h"
+#include "chat/chat-message/chat-message.h"
 
 // =============================================================================
 
@@ -79,6 +80,7 @@ public:
 	virtual void onLinphoneCoreStop () = 0;
 
 	virtual bool canCoreStart() = 0;
+	virtual LinphoneChatMessage *getPushNotificationMessage() = 0;
 
 protected:
 	inline explicit PlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core) : CoreAccessor(core) {}
@@ -129,6 +131,7 @@ public:
 	void onLinphoneCoreStop () override;
 
 	bool canCoreStart() override;
+	LinphoneChatMessage *getPushNotificationMessage() override;
 
 protected:
 	std::string mCurrentSSID;

@@ -660,6 +660,10 @@ int Core::getUnreadChatMessageCountFromActiveLocals () const {
 	return count;
 }
 
+LinphoneChatMessage *Core::getPushNotificationMessage () const {
+	return static_cast<PlatformHelpers *>(getCCore()->platform_helper)->getPushNotificationMessage();
+}
+
 // -----------------------------------------------------------------------------
 
 Address Core::interpretUrl (const std::string &url) const {

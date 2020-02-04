@@ -32,6 +32,7 @@
 
 #include "linphone/utils/general.h"
 #include "linphone/utils/utils.h"
+#include "c-wrapper/c-wrapper.h"
 
 #include "logger/logger.h"
 #include "platform-helpers.h"
@@ -53,6 +54,7 @@ typedef enum {
 	executorCoreStarted
 } SharedCoreState;
 
+LinphoneChatMessage *pushNotifMsg;
 void on_core_must_stop(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo);
 
 class IosPlatformHelpers : public GenericPlatformHelpers {
@@ -90,6 +92,8 @@ public:
 
 	void onLinphoneCoreStart (bool monitoringEnabled) override;
 	void onLinphoneCoreStop () override;
+
+	LinphoneChatMessage *getPushNotificationMessage() override;
 
 	// shared core
 	bool canCoreStart() override;
@@ -613,6 +617,32 @@ string IosPlatformHelpers::getWifiSSID(void) {
 	}
 	return ssid;
 #endif
+}
+
+static void on_push_notification_message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message) {
+	const char *contentType = linphone_chat_message_get_content_type(message);
+	if (strcmp(contentType, "text/plain") == 0 || strcmp(contentType, "image/jpeg") == 0) {
+		pushNotifMsg = message;
+	}
+}
+
+LinphoneChatMessage *IosPlatformHelpers::getPushNotificationMessage() {
+	pushNotifMsg = nullptr;
+	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+ 	linphone_core_cbs_set_message_received(cbs, on_push_notification_message_received);
+	linphone_core_add_callbacks(getCore()->getCCore(), cbs);
+
+	if (linphone_core_start(getCore()->getCCore()) != 0) {
+		return nullptr;
+	}
+
+	for (int i = 0; i < 100 && !pushNotifMsg; i++) {
+		ms_message("[PUSH] wait msg: %d", i);
+		linphone_core_iterate(getCore()->getCCore());
+		ms_usleep(100000);
+	}
+
+	return pushNotifMsg;
 }
 
 // -----------------------------------------------------------------------------
