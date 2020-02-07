@@ -6135,10 +6135,11 @@ LINPHONE_PUBLIC void linphone_core_ensure_registered(LinphoneCore *lc);
 /**
  * Get the chat message for the push notification
  * @param[in] lc The #LinphoneCore
+ * @param[in] call_id The callId of the Message SIP transaction
  * @return The #LinphoneChatMessage object.
  * @ingroup misc
 **/
-LINPHONE_PUBLIC LinphoneChatMessage * linphone_core_get_push_notification_message(LinphoneCore *lc);
+LINPHONE_PUBLIC LinphoneChatMessage * linphone_core_get_push_notification_message(LinphoneCore *lc, const char *call_id);
 
 #ifdef __cplusplus
 }

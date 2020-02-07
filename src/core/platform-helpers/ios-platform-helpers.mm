@@ -32,6 +32,7 @@
 
 #include "linphone/utils/general.h"
 #include "linphone/utils/utils.h"
+#include "chat/chat-room/chat-room.h"
 #include "c-wrapper/c-wrapper.h"
 
 #include "logger/logger.h"
@@ -93,7 +94,8 @@ public:
 	void onLinphoneCoreStart (bool monitoringEnabled) override;
 	void onLinphoneCoreStop () override;
 
-	LinphoneChatMessage *getPushNotificationMessage() override;
+	std::shared_ptr<ChatMessage> getPushNotificationMessage(const string &callId) override;
+	std::shared_ptr<ChatMessage> processPushNotificationMessage(const string &callId);
 
 	// shared core
 	bool canCoreStart() override;
@@ -118,6 +120,7 @@ private:
 	void setupSharedCore(struct _LpConfig *config);
 	bool isCoreShared();
 	bool isSharedCoreStarted();
+	SharedCoreState getSharedCoreState();
 	void setSharedCoreState(SharedCoreState sharedCoreState);
 	void reloadConfig();
 
@@ -619,6 +622,30 @@ string IosPlatformHelpers::getWifiSSID(void) {
 #endif
 }
 
+std::shared_ptr<ChatMessage> IosPlatformHelpers::getPushNotificationMessage(const string &callId) {
+	ms_message("[push] getPushNotificationMessage");
+	for (int i = 0; i < 30; i++) {
+		ms_message("[push] wait core: %d", i);
+		switch(getSharedCoreState()) {
+			case SharedCoreState::mainCoreStarted:
+				ms_message("[push] mainCoreStarted");
+				return nullptr;
+				break;
+			case SharedCoreState::executorCoreStarted:
+				ms_message("[push] executorCoreStarted");
+				ms_usleep(100000);
+				break;
+			case SharedCoreState::noCoreStarted:
+				ms_message("[push] noCoreStarted");
+				return processPushNotificationMessage(callId);
+				break;
+			default:
+				return nullptr;
+		}
+	}
+	return nullptr;
+}
+
 static void on_push_notification_message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message) {
 	const char *contentType = linphone_chat_message_get_content_type(message);
 	if (strcmp(contentType, "text/plain") == 0 || strcmp(contentType, "image/jpeg") == 0) {
@@ -626,8 +653,12 @@ static void on_push_notification_message_received(LinphoneCore *lc, LinphoneChat
 	}
 }
 
-LinphoneChatMessage *IosPlatformHelpers::getPushNotificationMessage() {
-	pushNotifMsg = nullptr;
+// TODO PAUL ; use timers instead of sleep ?
+std::shared_ptr<ChatMessage> IosPlatformHelpers::processPushNotificationMessage(const string &callId) {
+	ms_message("[push] processPushNotificationMessage");
+	setNetworkReachable(false);
+
+	// pushNotifMsg = nullptr;
 	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
  	linphone_core_cbs_set_message_received(cbs, on_push_notification_message_received);
 	linphone_core_add_callbacks(getCore()->getCCore(), cbs);
@@ -635,14 +666,28 @@ LinphoneChatMessage *IosPlatformHelpers::getPushNotificationMessage() {
 	if (linphone_core_start(getCore()->getCCore()) != 0) {
 		return nullptr;
 	}
+	ms_message("[push] core started");
 
-	for (int i = 0; i < 100 && !pushNotifMsg; i++) {
-		ms_message("[PUSH] wait msg: %d", i);
-		linphone_core_iterate(getCore()->getCCore());
-		ms_usleep(100000);
+	std::shared_ptr<ChatMessage> chatMessage = getCore()->findChatMessageFromCallId(callId);
+	ms_message("[push] message1: %d", chatMessage? true : false);
+	if (chatMessage) {
+		return chatMessage;
 	}
 
-	return pushNotifMsg;
+	setNetworkReachable(true);
+
+	for (int i = 0; i < 100; i++) {
+		ms_message("[push] wait msg: %d", i);
+		linphone_core_iterate(getCore()->getCCore());
+		ms_usleep(50000);
+	}
+
+	
+	std::shared_ptr<ChatMessage> chatMessage2 = getCore()->findChatMessageFromCallId(callId);
+	ms_message("[push] message2: %d", chatMessage2? true : false);
+	return chatMessage2;
+
+	// return pushNotifMsg;
 }
 
 // -----------------------------------------------------------------------------
@@ -678,6 +723,12 @@ bool IosPlatformHelpers::isSharedCoreStarted() {
 		return false;
 	}
 	return true;
+}
+
+SharedCoreState IosPlatformHelpers::getSharedCoreState() {
+	NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(mAppGroup.c_str())];
+    NSInteger state = [defaults integerForKey:@ACTIVE_SHARED_CORE];
+	return (SharedCoreState) state;
 }
 
 /**

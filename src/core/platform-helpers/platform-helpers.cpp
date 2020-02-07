@@ -175,7 +175,7 @@ bool GenericPlatformHelpers::canCoreStart() {
 	return true;
 }
 
-LinphoneChatMessage *GenericPlatformHelpers::getPushNotificationMessage() {
+std::shared_ptr<ChatMessage> GenericPlatformHelpers::getPushNotificationMessage(const string &callId) {
 	return nullptr;
 }
 

@@ -945,6 +945,7 @@ void ChatMessagePrivate::send () {
 	if (imdnId.empty()) {
 		setImdnMessageId(op->getCallId());   /* must be known at that time */
 	}
+//	setCallId(op->getCallId());
 	
 	if (toBeStored) {
 		// Composing messages and IMDN aren't stored in DB so do not try, it will log an error message Invalid db key for nothing.
@@ -1114,8 +1115,16 @@ const string &ChatMessage::getImdnMessageId () const {
 	return d->imdnId;
 }
 
-void ChatMessagePrivate::setImdnMessageId (const string &id) {
+void ChatMessagePrivate::setImdnMessageId (const string &id) { //TODO PAUL: call hierachy here
 	imdnId = id;
+}
+
+const string &ChatMessagePrivate::getCallId () const {
+	return callId;
+}
+
+void ChatMessagePrivate::setCallId (const string &id) {
+	callId = id;
 }
 
 void ChatMessagePrivate::setForwardInfo (const string &fInfo) {

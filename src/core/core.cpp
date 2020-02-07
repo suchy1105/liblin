@@ -660,8 +660,15 @@ int Core::getUnreadChatMessageCountFromActiveLocals () const {
 	return count;
 }
 
-LinphoneChatMessage *Core::getPushNotificationMessage () const {
-	return static_cast<PlatformHelpers *>(getCCore()->platform_helper)->getPushNotificationMessage();
+std::shared_ptr<ChatMessage> Core::getPushNotificationMessage (const std::string &callId) const {
+	std::shared_ptr<ChatMessage> msg = static_cast<PlatformHelpers *>(getCCore()->platform_helper)->getPushNotificationMessage(callId);
+	return msg;
+}
+
+std::shared_ptr<ChatMessage> Core::findChatMessageFromCallId (const std::string &callId) const {
+	L_D();
+	std::list<std::shared_ptr<ChatMessage>> chatMessages = d->mainDb->findChatMessagesFromCallId(callId);
+	return chatMessages.empty() ? nullptr : chatMessages.front();
 }
 
 // -----------------------------------------------------------------------------
